@@ -25,7 +25,7 @@ def clean_text(text):
     regex = re.compile(r'[\n\r\t]')
     clean = regex.sub(" ", clean)
     return clean
-	
+    
 @app.route('/load', methods = ['GET', 'POST'])
 #@cross_origin()
 def load():
@@ -40,40 +40,46 @@ def load():
             #print("looping through individual article")
             #print(raw_article)
             url = raw_article["url"]
-            article = Article(url, language="en") # en for English 
-            article.download()
-            article.parse()
-            data = [article.text]
-            article = pd.DataFrame({"text" : data}, index=[1])
-            article['text'] = article['text'].apply(clean_text)
-            X_newtesttext = tfidf.transform(article['text']).toarray()
-            X_new = pd.DataFrame(X_newtesttext)
-            pred = model.predict_proba(X_new)[0][0]*100
-            credibility = math.floor(pred)
-            result.append(
-                {
-                    'title': raw_article["title"],
-                    'image': raw_article["image"],
-                    'description': raw_article["description"],
-                    'time': raw_article["publishedAt"],
-                    'sourceName': raw_article["source"]["name"],
-                    'sourceURL': url,
-                    'credibility': credibility
-                }
-            )
+            if "http" in url":
+                article = Article(url, language="en")
+            else:
+                url = "https://" + url
+                article = Article(url, language="en")
+                article.download()
+                article.parse()
+                data = [article.text]
+                article = pd.DataFrame({"text" : data}, index=[1])
+                article['text'] = article['text'].apply(clean_text)
+                X_newtesttext = tfidf.transform(article['text']).toarray()
+                X_new = pd.DataFrame(X_newtesttext)
+                pred = model.predict_proba(X_new)[0][0]*100
+                credibility = math.floor(pred)
+                result.append(
+                    {
+                        'title': raw_article["title"],
+                        'image': raw_article["image"],
+                        'description': raw_article["description"],
+                        'time': raw_article["publishedAt"],
+                        'sourceName': raw_article["source"]["name"],
+                        'sourceURL': url,
+                        'credibility': credibility
+                    }
+                )
         print("results are")
         print(result)
         return jsonify(result)
 
     else:
         return redirect('http://localhost:5000')
-		
+        
 @app.route('/predict', methods = ['GET', 'POST'])
 #@cross_origin()
 def predict():
     if request.method == 'POST':
         global model
         inp = request.data
+        #print(inp)
+        #print("The result is {}.").format(inp)
         print("The input of user is {}.").format(inp)
         if True:
             article = Article(inp, language="en") # en for English 
