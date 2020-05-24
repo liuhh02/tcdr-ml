@@ -45,26 +45,26 @@ def load():
             else:
                 url = "https://" + url
                 article = Article(url, language="en")
-                article.download()
-                article.parse()
-                data = [article.text]
-                article = pd.DataFrame({"text" : data}, index=[1])
-                article['text'] = article['text'].apply(clean_text)
-                X_newtesttext = tfidf.transform(article['text']).toarray()
-                X_new = pd.DataFrame(X_newtesttext)
-                pred = model.predict_proba(X_new)[0][0]*100
-                credibility = math.floor(pred)
-                result.append(
-                    {
-                        'title': raw_article["title"],
-                        'image': raw_article["image"],
-                        'description': raw_article["description"],
-                        'time': raw_article["publishedAt"],
-                        'sourceName': raw_article["source"]["name"],
-                        'sourceURL': url,
-                        'credibility': credibility
-                    }
-                )
+            article.download()
+            article.parse()
+            data = [article.text]
+            article = pd.DataFrame({"text" : data}, index=[1])
+            article['text'] = article['text'].apply(clean_text)
+            X_newtesttext = tfidf.transform(article['text']).toarray()
+            X_new = pd.DataFrame(X_newtesttext)
+            pred = model.predict_proba(X_new)[0][0]*100
+            credibility = math.floor(pred)
+            result.append(
+                {
+                    'title': raw_article["title"],
+                    'image': raw_article["image"],
+                    'description': raw_article["description"],
+                    'time': raw_article["publishedAt"],
+                    'sourceName': raw_article["source"]["name"],
+                    'sourceURL': url,
+                    'credibility': credibility
+                }
+            )
         print("results are")
         print(result)
         return jsonify(result)
