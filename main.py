@@ -42,29 +42,38 @@ def load():
             url = raw_article["url"]
             if "http" in url:
                 article = Article(url, language="en")
+                article.download()
+                article.parse()
+                data = [article.text]
+                article = pd.DataFrame({"text" : data}, index=[1])
+                article['text'] = article['text'].apply(clean_text)
+                X_newtesttext = tfidf.transform(article['text']).toarray()
+                X_new = pd.DataFrame(X_newtesttext)
+                pred = model.predict_proba(X_new)[0][0]*100
+                credibility = math.floor(pred)
+                result.append(
+                    {
+                        'title': raw_article["title"],
+                        'image': raw_article["image"],
+                        'description': raw_article["description"],
+                        'time': raw_article["publishedAt"],
+                        'sourceName': raw_article["source"]["name"],
+                        'sourceURL': url,
+                        'credibility': credibility
+                    }
+                )
             else:
-                url = "https://" + url
-                article = Article(url, language="en")
-            article.download()
-            article.parse()
-            data = [article.text]
-            article = pd.DataFrame({"text" : data}, index=[1])
-            article['text'] = article['text'].apply(clean_text)
-            X_newtesttext = tfidf.transform(article['text']).toarray()
-            X_new = pd.DataFrame(X_newtesttext)
-            pred = model.predict_proba(X_new)[0][0]*100
-            credibility = math.floor(pred)
-            result.append(
-                {
-                    'title': raw_article["title"],
-                    'image': raw_article["image"],
-                    'description': raw_article["description"],
-                    'time': raw_article["publishedAt"],
-                    'sourceName': raw_article["source"]["name"],
-                    'sourceURL': url,
-                    'credibility': credibility
-                }
-            )
+                result.append(
+                    {
+                        'title': raw_article["title"],
+                        'image': raw_article["image"],
+                        'description': raw_article["description"],
+                        'time': raw_article["publishedAt"],
+                        'sourceName': raw_article["source"]["name"],
+                        'sourceURL': url,
+                        'credibility': 50
+                    }
+                )
         print("results are")
         print(result)
         return jsonify(result)
@@ -78,11 +87,14 @@ def predict():
     if request.method == 'POST':
         global model
         inp = request.data
+        url = inp.decode('utf-8')
+        print("input is")
+        print(url)
         #print(inp)
         #print("The result is {}.").format(inp)
         print("The input of user is {}.").format(inp)
         if True:
-            article = Article(inp, language="en") # en for English 
+            article = Article(url, language="en") # en for English 
             article.download()
             article.parse()
             data = [article.text]
