@@ -1,25 +1,35 @@
 import os
 from flask import Flask, request, redirect, url_for, render_template, jsonify
 import json
-#from sentence_transformers import SentenceTransformer
 import pandas as pd
 import re
 from flask_cors import CORS, cross_origin
 import pickle
 from newspaper import Article
 import math
+from transformers import BartTokenizer, BartForConditionalGeneration
+import torch
+from Bio import Entrez, Medline
+from io import StringIO
+import summariser
 
 app = Flask(__name__)
-#CORS(app, resources=r'/api/*', allow_headers='Content-Type')
 cors = CORS(app)
-# loading models
+
+# loading credibility scoring model
 model = pickle.load(open('model.sav', 'rb'))
 with open('tfidf_small.pickle', 'rb') as handle:
     tfidf = pickle.load(handle)
-        
-# loading similarity ML model
-#model2 = SentenceTransformer('bert-base-nli-mean-tokens')
-    
+
+# loading summarizer model
+torch_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+SUMMARY_TOKENIZER = BartTokenizer.from_pretrained('bart-large-cnn')
+SUMMARY_MODEL = BartForConditionalGeneration.from_pretrained('bart-large-cnn')
+SUMMARY_MODEL.to(torch_device)
+SUMMARY_MODEL.eval()
+Entrez.email = 'pubmedemail@gmail.com'
+
 def clean_text(text):
     clean = re.sub(r'[^\x00-\x7f]',r'', text)
     regex = re.compile(r'[\n\r\t]')
@@ -114,6 +124,25 @@ def predict():
         else:
             print("Please enter a link to the article starting with http")
             return "Please enter a link to the article starting with http"
+
+    else:
+        return redirect('http://localhost:5000')
+
+@app.route('/sci', methods = ['GET', 'POST'])
+#@cross_origin()
+def sci():
+    if request.method == 'POST':
+        inp = request.data
+        query = inp.decode('utf-8')
+        results = summariser.pubMedSearch(query)
+        results = pd.DataFrame(results).transpose()
+
+        results['summary'] = results['abstract'].apply(summariser.getsummary)
+        results['link'] = results['doi'].apply(summariser.getLink)
+        results = results[['title', 'link', 'summary']]
+        results_dict = results.to_dict('index')
+
+        return jsonify(results_dict)
 
     else:
         return redirect('http://localhost:5000')
