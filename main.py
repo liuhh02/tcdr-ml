@@ -40,7 +40,7 @@ def load():
             #print("looping through individual article")
             #print(raw_article)
             url = raw_article["url"]
-            if "http" in url":
+            if "http" in url:
                 article = Article(url, language="en")
             else:
                 url = "https://" + url
