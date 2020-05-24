@@ -66,9 +66,10 @@ def load():
 def predict():
     if request.method == 'POST':
         global model
-        inp = request.body
+        inp = request
+        print('postreq')
         print(inp)
-        if true:
+        if True:
             article = Article(inp, language="en") # en for English 
             article.download()
             article.parse()
