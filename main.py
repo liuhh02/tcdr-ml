@@ -32,12 +32,13 @@ def load():
     if request.method == 'POST':
         global model
         inp = request.get_json(force=True)
-        print(inp)
+        #print(inp)
         #print("The result is {}.").format(inp)
-        parsed_json = inp
+        parsed_json = inp["url"]
         result = []
         for raw_article in parsed_json:
-            print(raw_article)
+            #print("looping through individual article")
+            #print(raw_article)
             url = raw_article["url"]
             article = Article(url, language="en") # en for English 
             article.download()
@@ -60,6 +61,8 @@ def load():
                     'credibility': credibility
                 }
             )
+        print("results are")
+        print(result)
         return jsonify(result)
 
     else:
