@@ -42,6 +42,9 @@ def load():
             url = raw_article["url"]
             if "http" in url:
                 article = Article(url, language="en")
+            else:
+                url = "http://" + url
+                article = Article(url, language="en")
                 article.download()
                 article.parse()
                 data = [article.text]
@@ -62,18 +65,6 @@ def load():
                         'credibility': credibility
                     }
                 )
-            else:
-                result.append(
-                    {
-                        'title': raw_article["title"],
-                        'image': raw_article["image"],
-                        'description': raw_article["description"],
-                        'time': raw_article["publishedAt"],
-                        'sourceName': raw_article["source"]["name"],
-                        'sourceURL': url,
-                        'credibility': 50
-                    }
-                )
         print("results are")
         print(result)
         return jsonify(result)
@@ -92,11 +83,18 @@ def predict():
         print(url)
         #print(inp)
         #print("The result is {}.").format(inp)
-        print("The input of user is {}.").format(inp)
+        #print("The input of user is {}.").format(inp)
         if True:
+            url = eval(url)
+            print("url is")
+            print(url)
             article = Article(url, language="en") # en for English 
             article.download()
             article.parse()
+            title = article.title
+            image = article.top_image
+            description = article.text
+            time = article.publish_date
             data = [article.text]
             article = pd.DataFrame({"text" : data}, index=[1])
             article['text'] = article['text'].apply(clean_text)
@@ -105,14 +103,15 @@ def predict():
             pred = model.predict_proba(X_new)[0][0]*100
             credibility = math.floor(pred)
             result = {
-                'title': article.title,
-                'image': article.top_image,
-                'description': article.text,
-                'time': article.publish_date,
-                'sourceName': inp.split('www.')[1].split('.com')[0],
-                'sourceURL': inp,
+                'title': title,
+                'image': image,
+                'description': description,
+                'time': time,
+                'sourceName': url.split('www.')[1].split('.com')[0],
+                'sourceURL': url,
                 'credibility': credibility
             }
+            print(result)
             return jsonify(result)
         else:
             print("Please enter a link to the article starting with http")
