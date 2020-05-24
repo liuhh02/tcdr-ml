@@ -32,39 +32,42 @@ def load():
     if request.method == 'POST':
         global model
         inp = request.get_json(force=True)
-        #print(inp)
+        print("old input")
+        print(inp)
+        print("new input")
+        print(inp['url']['rawData'])
         #print("The result is {}.").format(inp)
-        parsed_json = inp["url"]
+        parsed_json = inp["url"]['rawData']
         result = []
         for raw_article in parsed_json:
-            #print("looping through individual article")
-            #print(raw_article)
+            print("looping through individual article")
+            print(raw_article)
             url = raw_article["url"]
             if "http" in url:
                 article = Article(url, language="en")
             else:
                 url = "http://" + url
                 article = Article(url, language="en")
-                article.download()
-                article.parse()
-                data = [article.text]
-                article = pd.DataFrame({"text" : data}, index=[1])
-                article['text'] = article['text'].apply(clean_text)
-                X_newtesttext = tfidf.transform(article['text']).toarray()
-                X_new = pd.DataFrame(X_newtesttext)
-                pred = model.predict_proba(X_new)[0][0]*100
-                credibility = math.floor(pred)
-                result.append(
-                    {
-                        'title': raw_article["title"],
-                        'image': raw_article["image"],
-                        'description': raw_article["description"],
-                        'time': raw_article["publishedAt"],
-                        'sourceName': raw_article["source"]["name"],
-                        'sourceURL': url,
-                        'credibility': credibility
-                    }
-                )
+            article.download()
+            article.parse()
+            data = [article.text]
+            article = pd.DataFrame({"text" : data}, index=[1])
+            article['text'] = article['text'].apply(clean_text)
+            X_newtesttext = tfidf.transform(article['text']).toarray()
+            X_new = pd.DataFrame(X_newtesttext)
+            pred = model.predict_proba(X_new)[0][0]*100
+            credibility = math.floor(pred)
+            result.append(
+                {
+                    'title': raw_article["title"],
+                    'image': raw_article["image"],
+                    'description': raw_article["description"],
+                    'time': raw_article["publishedAt"],
+                    'sourceName': raw_article["source"]["name"],
+                    'sourceURL': url,
+                    'credibility': credibility
+                }
+            )
         print("results are")
         print(result)
         return jsonify(result)
@@ -79,11 +82,6 @@ def predict():
         global model
         inp = request.data
         url = inp.decode('utf-8')
-        print("input is")
-        print(url)
-        #print(inp)
-        #print("The result is {}.").format(inp)
-        #print("The input of user is {}.").format(inp)
         if True:
             url = eval(url)
             print("url is")
